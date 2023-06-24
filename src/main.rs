@@ -347,7 +347,7 @@ fn load_font(name: &str) -> FontFace {
     FontFace::create_from_ft(&face).unwrap()
 }
 
-fn load_config() -> (Config, [FunctionLayer; 2]) {
+fn load_config(width: u16) -> (Config, [FunctionLayer; 2]) {
     let mut base = toml::from_str::<ConfigProxy>(&read_to_string("/usr/share/tiny-dfr/config.toml").unwrap()).unwrap();
     let user = read_to_string(USER_CFG_PATH).map_err::<Error, _>(|e| e.into())
         .and_then(|r| Ok(toml::from_str::<ConfigProxy>(&r)?));
@@ -361,7 +361,14 @@ fn load_config() -> (Config, [FunctionLayer; 2]) {
     };
     let media_layer = FunctionLayer::with_config(base.media_layer_keys.unwrap());
     let fkey_layer = FunctionLayer::with_config(base.primary_layer_keys.unwrap());
-    let layers = if base.media_layer_default.unwrap(){ [media_layer, fkey_layer] } else { [fkey_layer, media_layer] };
+    let mut layers = if base.media_layer_default.unwrap(){ [media_layer, fkey_layer] } else { [fkey_layer, media_layer] };
+
+    if width >= 2170 {
+        for layer in &mut layers {
+            layer.buttons.insert(0, Button::new_text("esc".to_string(), Key::Esc));
+        }
+    }
+
     let cfg = Config {
         show_button_outlines: base.show_button_outlines.unwrap(),
         enable_pixel_shift: base.enable_pixel_shift.unwrap(),
@@ -408,7 +415,7 @@ fn real_main(drm: &mut DrmBackend) {
     let (db_width, db_height) = drm.fb_info().unwrap().size();
     let mut uinput = UInputHandle::new(OpenOptions::new().write(true).open("/dev/uinput").unwrap());
     let mut backlight = BacklightManager::new();
-    let (mut cfg, mut layers) = load_config();
+    let (mut cfg, mut layers) = load_config(width);
     let mut pixel_shift = PixelShiftManager::new();
 
     // drop privileges to input and video group
@@ -470,7 +477,7 @@ fn real_main(drm: &mut DrmBackend) {
             if evt.wd != cfg_watch_desc {
                 continue
             }
-            (cfg, layers) = load_config();
+            (cfg, layers) = load_config(width);
             active_layer = 0;
             needs_complete_redraw = true;
             cfg_watch_desc = arm_inotify(&inotify_fd);
