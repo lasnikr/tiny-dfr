@@ -59,6 +59,7 @@ struct ConfigProxy {
     media_layer_default: Option<bool>,
     show_button_outlines: Option<bool>,
     enable_pixel_shift: Option<bool>,
+    disable_escape_key: Option<bool>,
     font_template: Option<String>,
     primary_layer_keys: Option<Vec<ButtonConfig>>,
     media_layer_keys: Option<Vec<ButtonConfig>>
@@ -355,6 +356,7 @@ fn load_config(width: u16) -> (Config, [FunctionLayer; 2]) {
         base.media_layer_default = user.media_layer_default.or(base.media_layer_default);
         base.show_button_outlines = user.show_button_outlines.or(base.show_button_outlines);
         base.enable_pixel_shift = user.enable_pixel_shift.or(base.enable_pixel_shift);
+        base.disable_escape_key = user.disable_escape_key.or(base.disable_escape_key);
         base.font_template = user.font_template.or(base.font_template);
         base.media_layer_keys = user.media_layer_keys.or(base.media_layer_keys);
         base.primary_layer_keys = user.primary_layer_keys.or(base.primary_layer_keys);
@@ -363,7 +365,7 @@ fn load_config(width: u16) -> (Config, [FunctionLayer; 2]) {
     let fkey_layer = FunctionLayer::with_config(base.primary_layer_keys.unwrap());
     let mut layers = if base.media_layer_default.unwrap(){ [media_layer, fkey_layer] } else { [fkey_layer, media_layer] };
 
-    if width >= 2170 {
+    if width >= 2170 && !base.disable_escape_key.unwrap() {
         for layer in &mut layers {
             layer.buttons.insert(0, Button::new_text("esc".to_string(), Key::Esc));
         }

@@ -15,6 +15,11 @@ ShowButtonOutlines = true
 # Disabling ShowButtonOutlines will make this effect less noticeable to the eye
 EnablePixelShift = false
 
+# Set this to true to disable the escape key that will be present in the top left
+# (when your model doesn't have a physical escape key).
+# Users may have remapped the grave key to esc via evsieve or similar.
+DisableEscapeKey = false
+
 # Set this to the fontconfig pattern to be used to pick a font for text labels
 # Some examples are:
 # "" - default regular sans-serif font
