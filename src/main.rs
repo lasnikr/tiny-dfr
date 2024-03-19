@@ -7,7 +7,8 @@ use std::{
     path::Path,
     collections::HashMap,
     cmp::min,
-    panic::{self, AssertUnwindSafe}
+    panic::{self, AssertUnwindSafe},
+    process::Command
 };
 use cairo::{ImageSurface, Format, Context, Surface, Rectangle, FontFace, Antialias};
 use rsvg::{Loader, CairoRenderer, SvgHandle};
@@ -35,6 +36,8 @@ use nix::{
 use privdrop::PrivDrop;
 use serde::Deserialize;
 use freetype::Library as FtLibrary;
+// TODO replace *
+use either::*;
 
 mod backlight;
 mod display;
@@ -71,7 +74,8 @@ struct ButtonConfig {
     #[serde(alias = "Svg")]
     icon: Option<String>,
     text: Option<String>,
-    action: Key
+    key_action: Option<Key>,
+    command: Option<String>
 }
 
 struct Config {
@@ -90,7 +94,7 @@ struct Button {
     image: ButtonImage,
     changed: bool,
     active: bool,
-    action: Key
+    action: Either<Key, String>
 }
 
 fn try_load_svg(path: &str) -> Result<ButtonImage> {
@@ -119,28 +123,34 @@ fn try_load_png(path: &str) -> Result<ButtonImage> {
 
 impl Button {
     fn with_config(cfg: ButtonConfig) -> Button {
+        let action: Either<Key, String> = match (cfg.key_action, cfg.command) {
+            (Some(key_action), None)    => Left(key_action),
+            (None, Some(command))       => Right(command),
+            _                   => panic!("Invalid config, a button should either have a KeyAction or a Command")
+        };
         if let Some(text) = cfg.text {
-            Button::new_text(text, cfg.action)
+            Button::new_text(text, action)
         } else if let Some(icon) = cfg.icon {
-            Button::new_icon(&icon, cfg.action)
+            Button::new_icon(&icon, action)
         } else {
             panic!("Invalid config, a button must have either Text or Icon")
         }
     }
-    fn new_text(text: String, action: Key) -> Button {
+    fn new_text(text: String, action: Either<Key, String>) -> Button {
         Button {
-            action,
-            active: false,
+            image: ButtonImage::Text(text),
             changed: false,
-            image: ButtonImage::Text(text)
+            active: false,
+            action
         }
     }
-    fn new_icon(path: &str, action: Key) -> Button {
+    fn new_icon(path: &str, action: Either<Key, String>) -> Button {
         let image = try_load_svg(path).or_else(|_| try_load_png(path)).unwrap();
         Button {
-            action, image,
-            active: false,
+            image,
             changed: false,
+            active: false,
+            action,
         }
     }
     fn render(&self, c: &Context, height: i32, button_left_edge: f64, button_width: u64, y_shift: f64) {
@@ -176,7 +186,13 @@ impl Button {
             self.active = active;
             self.changed = true;
 
-            toggle_key(uinput, self.action, active as i32);
+            // TODO this seems sketchy (clone), followed compiler hints
+            let action = &self.action;
+            if let Some(key_action) = action.clone().left() {
+                toggle_key(uinput, key_action, active as i32);
+            } else if let Some(command) = action.clone().right() {
+                run_command(command);
+            }
         }
     }
 }
@@ -336,6 +352,17 @@ fn toggle_key<F>(uinput: &mut UInputHandle<F>, code: Key, value: i32) where F: A
     emit(uinput, EventKind::Synchronize, SynchronizeKind::Report as u16, 0);
 }
 
+fn run_command(command: String) {
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg(command)
+        .output()
+        .expect("failed to execute process");
+    
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    println!("{}", stdout); 
+}
+
 fn load_font(name: &str) -> FontFace {
     let fontconfig = FontConfig::new();
     let mut pattern = Pattern::new(name);
@@ -367,7 +394,7 @@ fn load_config(width: u16) -> (Config, [FunctionLayer; 2]) {
 
     if width >= 2170 && !base.disable_escape_key.unwrap() {
         for layer in &mut layers {
-            layer.buttons.insert(0, Button::new_text("esc".to_string(), Key::Esc));
+            layer.buttons.insert(0, Button::new_text("esc".to_string(), Left(Key::Esc)));
         }
     }
 
@@ -444,7 +471,10 @@ fn real_main(drm: &mut DrmBackend) {
     uinput.set_evbit(EventKind::Key).unwrap();
     for layer in &layers {
         for button in &layer.buttons {
-            uinput.set_keybit(button.action).unwrap();
+            // TODO this seems sketchy (clone), followed compiler hints
+            if let Some(key_action) = button.action.clone().left() {
+                uinput.set_keybit(key_action).unwrap();
+            }
         }
     }
     let inotify_fd = Inotify::init(InitFlags::IN_NONBLOCK).unwrap();
