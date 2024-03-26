@@ -48,33 +48,33 @@ PrimaryLayerKeys = [
     # https://docs.rs/input-linux/latest/input_linux/enum.Key.html
     # Note that the escape key is not specified here, as it is added
     # automatically on Macs without a physical one
-    { Text = "F1",  KeyAction = "F1"  },
-    { Text = "F2",  KeyAction = "F2"  },
-    { Text = "F3",  KeyAction = "F3"  },
-    { Text = "F4",  KeyAction = "F4"  },
-    { Text = "F5",  KeyAction = "F5"  },
-    { Text = "F6",  KeyAction = "F6"  },
-    { Text = "F7",  KeyAction = "F7"  },
-    { Text = "F8",  KeyAction = "F8"  },
-    { Text = "F9",  KeyAction = "F9"  },
-    { Text = "F10", KeyAction = "F10" },
-    { Text = "F11", KeyAction = "F11" },
-    { Text = "F12", KeyAction = "F12" }
+    { Text = "F1",  Action = "F1"  },
+    { Text = "F2",  Action = "F2"  },
+    { Text = "F3",  Action = "F3"  },
+    { Text = "F4",  Action = "F4"  },
+    { Text = "F5",  Action = "F5"  },
+    { Text = "F6",  Action = "F6"  },
+    { Text = "F7",  Action = "F7"  },
+    { Text = "F8",  Action = "F8"  },
+    { Text = "F9",  Action = "F9"  },
+    { Text = "F10", Action = "F10" },
+    { Text = "F11", Action = "F11" },
+    { Text = "F12", Action = "F12" }
 ]
 
 # This key defines the contents of the media key layer
 MediaLayerKeys = [
-    { Icon = "brightness_low",  KeyAction = "BrightnessDown" },
-    { Icon = "brightness_high", KeyAction = "BrightnessUp"   },
-    { Icon = "mic_off",         KeyAction = "MicMute"        },
-    { Icon = "search",          KeyAction = "Search"         },
-    { Icon = "backlight_low",   KeyAction = "IllumDown"      },
-    { Icon = "backlight_high",  KeyAction = "IllumUp"        },
-    { Icon = "fast_rewind",     KeyAction = "PreviousSong"   },
-    { Icon = "play_pause",      KeyAction = "PlayPause"      },
-    { Icon = "fast_forward",    KeyAction = "NextSong"       },
-    { Icon = "volume_off",      KeyAction = "Mute"           },
-    { Icon = "volume_down",     KeyAction = "VolumeDown"     },
-    { Icon = "volume_up",       KeyAction = "VolumeUp"       }
+    { Icon = "brightness_low",  Action = "BrightnessDown" },
+    { Icon = "brightness_high", Action = "BrightnessUp"   },
+    { Icon = "mic_off",         Action = "MicMute"        },
+    { Icon = "search",          Action = "Search"         },
+    { Icon = "backlight_low",   Action = "IllumDown"      },
+    { Icon = "backlight_high",  Action = "IllumUp"        },
+    { Icon = "fast_rewind",     Action = "PreviousSong"   },
+    { Icon = "play_pause",      Action = "PlayPause"      },
+    { Icon = "fast_forward",    Action = "NextSong"       },
+    { Icon = "volume_off",      Action = "Mute"           },
+    { Icon = "volume_down",     Action = "VolumeDown"     },
+    { Icon = "volume_up",       Action = "VolumeUp"       }
 ]
 
